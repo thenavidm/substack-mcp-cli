@@ -8,7 +8,7 @@
 [![X](https://img.shields.io/badge/X-@thenavidm-black?logo=x)](https://x.com/thenavidm)
 [![LinkedIn](https://img.shields.io/badge/LinkedIn-thenavidm-0A66C2?logo=linkedin&logoColor=white)](https://linkedin.com/in/thenavidm)
 
-Substack MCP server and CLI for Claude Code and AI agents. 65 tools for drafts, posts, Notes, subscribers, analytics, tags, comments, and researching other writers.
+Substack MCP server and CLI for Claude Code, Codex and AI agents. 65 tools for drafts, posts, Notes, subscribers, analytics, tags, comments, and researching other writers.
 
 One install gives you both surfaces, the same tools under the same names,
 covering everything the dashboard does and several things it cannot.
@@ -803,6 +803,20 @@ An MCP server is a standard way to give an AI assistant real access to a tool.
 Instead of describing your Substack to Claude and hoping it guesses right, the server exposes your actual drafts, subscribers and analytics as things the assistant can read and act on.
 
 MCP is the protocol they agree on, so one server works in Claude, Cursor, Windsurf and anything else that speaks it.
+
+</details>
+
+<details>
+<summary><b>What is the CLI?</b></summary>
+
+`substack-cli` is the same program as the MCP server, run as commands. AI agents that run commands, like Claude Code, Codex and OpenCode, use it on their own, and you can type the same commands in a terminal, a script or a cron job. Every tool is a command with dashes, so `list_drafts` runs as `substack-cli list-drafts`.
+
+</details>
+
+<details>
+<summary><b>Should I use the MCP server or the CLI?</b></summary>
+
+Use the MCP server in an app with no terminal, like Claude Desktop's chat. Use the CLI anywhere commands run: an agent like Claude Code, Codex or OpenCode, a script or a cron job. The MCP server sends its full tool list to the model on every turn, and the CLI costs nothing until it runs.
 
 </details>
 
