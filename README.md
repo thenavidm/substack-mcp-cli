@@ -905,7 +905,7 @@ Found a security vulnerability? [Report it privately](https://github.com/thenavi
 
 ## About the author 👋
 
-Navid Moazzez is a leading AI business strategist, and the host of the AI Creator Summit, watched by 100,000+ creators. He helps creators and founders master AI and build their own AI Operating System (AI OS) to automate their business and life. This Substack MCP server is one piece of that system.
+Navid Moazzez is a leading AI business strategist, and the host of the AI Creator Summit, watched by 100,000+ creators. He helps creators and founders master AI and build their own AI Operating System (AI OS) to automate their business and life. He creates useful free tools, MCP servers and CLIs that creators and founders can use in their own workflows.
 
 **Links**
 
@@ -936,4 +936,4 @@ Not affiliated with, endorsed by, or connected to Substack Inc.
 
 ---
 
-© 2026 [NM Media](https://navid.media?utm_source=github&utm_medium=referral&utm_campaign=substack-mcp&utm_content=readme). Made with ❤️ by [Navid Moazzez](https://navid.me?utm_source=github&utm_medium=referral&utm_campaign=substack-mcp&utm_content=readme).
+© 2026 [Navid Media](https://navid.media?utm_source=github&utm_medium=referral&utm_campaign=substack-mcp-cli&utm_content=readme). Made with ❤️ by [Navid Moazzez](https://navid.me?utm_source=github&utm_medium=referral&utm_campaign=substack-mcp-cli&utm_content=readme).
