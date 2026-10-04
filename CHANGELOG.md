@@ -2,9 +2,13 @@
 
 | Component | Version | Last Updated |
 |-----------|---------|--------------|
-| substack-mcp-cli | 2.2.2 | 2026-09-04 |
+| substack-mcp-cli | 2.2.3 | 2026-10-04 |
 
 ---
+
+## 2.2.3, 2026-10-04
+
+- **`npx -y @thenavidm/substack-mcp-cli` starts the MCP server whatever order npm keeps.** npx starts whichever binary the npm registry lists first when they share one file, and the registry does not keep the published order. For this package that happened to be the server; for 23 others it was the CLI. A third binary named after the package, on its own file, now always starts the server, and npx picks it by name.
 
 ## 2.2.2
 
