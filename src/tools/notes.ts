@@ -168,6 +168,7 @@ Scheduling is not publishing, so this does not require a confirmation. The Note 
     name: "cancel_scheduled_note",
     title: "Cancel a scheduled Note",
     risk: "write",
+    idempotent: true,
     description:
       "Cancel a queued Note before it publishes. Only works while it is still scheduled.",
     schema: {

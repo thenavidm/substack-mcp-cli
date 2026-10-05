@@ -2,9 +2,27 @@
 
 | Component | Version | Last Updated |
 |-----------|---------|--------------|
-| substack-mcp-cli | 2.2.3 | 2026-10-04 |
+| substack-mcp-cli | 3.0.0 | 2026-10-05 |
 
 ---
+
+## 3.0.0, 2026-10-05
+
+Built on [Slipway](https://github.com/thenavidm/slipway) 0.1.9. The 65 tools keep their names and arguments, and every difference below was measured against 2.2.3 before release.
+
+- **A person approves each publish, delete, Note and comment over MCP.** Claude Code (2.1.246 and later) shows its own prompt for each of the ten tools that are public or cannot be undone, and a client that can show forms asks with an approval form whose one box starts unticked. Approvals are signed, bound to the exact call and work once. Where a client can do neither, the model's `confirm: true` still counts, and `SUBSTACK_CONFIRM=model` makes it enough everywhere, for an agent with no person to ask. The audit log records who approved each write.
+- **A smaller tool list.** 22,833 tokens in Claude Code with every tool loaded, down from 25,215: the per-tool `$schema` line, an `execution` field and `additionalProperties: false` are gone. The last one advertised strict input while unknown keys were dropped anyway; the schema now says what happens.
+- **`idempotentHint` is true only where a repeat changes nothing more.** 2.2.3 set it on every write that was not destructive, so a client could take a retry of `create_draft` as harmless and make a second draft. The seven tools that create something, `create_draft`, `create_draft_from_template`, `create_tag`, `create_template`, `schedule_note`, `upload_image` and `add_subscriber`, now say so; updating, scheduling a draft, tagging and cancelling keep the hint.
+- **Exit codes follow the house contract everywhere.** A refused publish exits 2 instead of 5, an unknown command and a write in read-only mode 2 instead of 1, and `doctor` with nothing configured 10 instead of 1. 1 now means an unexpected error. Errors keep what Substack said in `details`, and a rate limit says how long to wait.
+- **`which <words>` finds a command without the full list**, and `agent-context` describes every command, flag and setting as JSON. In Codex, finding the command that schedules a Note and the flags it requires took 83,422 input tokens instead of 105,216 (median of five), in three commands every time. 2.2.3's help listed no commands, so the model matched that only when it guessed the name; otherwise it read the full list or ran a command that does not exist. Over MCP the same task read 24 fewer out of about 48,500.
+- **`install <client>`** adds the server to Claude Code, Codex, Claude Desktop, Cursor, VS Code or Gemini CLI in each one's own format, naming only the settings that connect a publication.
+- **Scheduled Notes still go out from a running server**, over stdio or HTTP, and never from a terminal command, now through Slipway's `onServe`.
+- **Less work to start.** The entry turns on Node's compile cache, and the server spends 173 ms of CPU before its first answer where 2.2.3 spent 202 (median of 21 runs, taking turns on one busy Mac). npx installs 4 dependencies instead of 94.
+- **Docs fixes.** INSTALL.md installed `@thenavidm/substack-mcp`, the package this one replaced, and SECURITY.md and INSTALL.md linked to a repository that does not exist. The README pointed Docker at an image that was never published, carried two stale copies of the variable table inside Troubleshooting and left `get_growth_sources` out of the tools; all fixed, with a Features table. The release workflow attaches the desktop extension, the icon and terminal recording load from cdn.navid.me, and THIRD_PARTY_NOTICES.md lists the production dependencies' licenses.
+
+### Upgrading
+
+Node 22 or newer; 2.2.3 ran on 20. Scripts keep working for success, usage errors and missing setup; one that treated exit 5 as a refused publish, or 1 as an unknown command or read-only mode, should read 2. Over MCP, expect an approval prompt or form for each publish, delete, Note and comment; a headless agent that should act with `confirm: true` alone needs `SUBSTACK_CONFIRM=model`. A script that pipes JSON-RPC into the server must keep stdin open until it reads the answer: the server now stops when its input ends, as the MCP stdio binding asks. The HTTP settings are `SUBSTACK_HTTP_PORT`, `_HOST`, `_TOKEN` and `_ALLOWED_ORIGINS`; 2.2's `SUBSTACK_MCP_` names still work, and the new ones win when both are set. `--http` will not start on an address other than localhost without a token, where 2.2.3 only warned. Some terminal screens grew: the general help by 218 tokens, for `which`, `install`, the flags, the exit codes and the safety settings it now lists; the command list by 24, for the lines that point to `which` and `--help`; `create-draft --help` by 16, for the defaults it now shows and `--dry-run`, which is new; and a missing argument's error by 15, for its code and the help to read.
 
 ## 2.2.3, 2026-10-04
 

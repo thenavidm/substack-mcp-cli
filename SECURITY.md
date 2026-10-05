@@ -2,7 +2,7 @@
 
 ## Reporting a vulnerability
 
-[Report it privately](https://github.com/thenavidm/substack-mcp/security/advisories/new).
+[Report it privately](https://github.com/thenavidm/substack-mcp-cli/security/advisories/new).
 Please do not open a public issue for a security problem: an issue is visible to
 everyone the moment you file it, including whoever would use the bug.
 
@@ -21,7 +21,7 @@ gist, or a chat. If one leaks, sign out of all sessions from Substack's settings
 which invalidates it, then capture a fresh one.
 
 **A stored session and an audit log**, in `~/.substack-mcp` unless
-`SUBSTACK_MCP_HOME` moves them. `substack-mcp login` writes `session.json` at
+`SUBSTACK_MCP_HOME` moves them. `substack-cli login` writes `session.json` at
 `0600`, encrypted with AES-256-GCM under a key derived from this machine and OS
 account, which is never stored.
 
@@ -44,15 +44,22 @@ permanently, which is worse than no protection because it looks like protection.
 
 Three graduated mechanisms instead:
 
-**`confirm: true` on the operations that cannot be taken back.** Publishing a
+**Approval for the operations that cannot be taken back.** Publishing a
 draft with `send: true` emails every subscriber you have, and an email cannot be
 unsent. Deleting a draft, a Note, a comment or a template is permanent with no
 trash to recover from. Publishing a Note, commenting and restacking are public
 the instant they run, with no draft state in between.
 
+Over MCP a person approves each of these where the client can ask: Claude Code
+shows its own prompt, and a client that can show forms asks with one. Each
+approval is signed, bound to that exact call and works once. Where a client can
+do neither, the model must pass `confirm: true`, and `SUBSTACK_CONFIRM=model`
+allows that everywhere, for an agent with no person to ask. In a terminal it is
+`--confirm`, which `--agent` never adds.
+
 Creating and editing drafts, tagging, scheduling and adding a subscriber are not
-guarded. Each is private or reversible, and confirming everything trains the
-model to pass `confirm` reflexively, which is worse than not asking.
+guarded. Each is private or reversible, and approving everything trains people
+and models to approve reflexively, which is worse than not asking.
 
 **`SUBSTACK_READ_ONLY=1` removes every write from the tool list.** Not a refusal
 at call time: the tools are never registered, leaving 41 read tools. A model
@@ -63,13 +70,13 @@ receives. This is the setting for pointing an untrusted agent at a publication.
 keep working, publishing and deleting do not.
 
 **`SUBSTACK_AUDIT_LOG=<path>` records every attempted write**, allowed and
-blocked alike, one JSON line each. The model has no tool to read or edit that
-file.
+blocked alike, one JSON line each, with who approved it. The model has no tool
+to read or edit that file.
 
 ## Untrusted content
 
 Comments, your reader feed, another writer's posts and Notes, and anything the
-research tools return are all text other people wrote. "Summarise my comments"
+research tools return are all text other people wrote. "Summarize my comments"
 is one of the first things anyone asks.
 
 Treat that content as data to report on, never as instructions. Every tool that
@@ -90,13 +97,14 @@ image, including before the post is published.
 
 ## Running it over HTTP
 
-The HTTP transport validates `Origin` and supports a bearer token, but that is a
-lock on one door, not an authentication system. It belongs behind TLS and an
-authenticating reverse proxy.
+The HTTP transport refuses browser requests from other sites unless
+`SUBSTACK_HTTP_ALLOWED_ORIGINS` lists them, and takes a bearer token in
+`SUBSTACK_HTTP_TOKEN`, but that is a lock on one door, not an authentication
+system. It belongs behind TLS and an authenticating reverse proxy.
 
 Do not expose it directly. It holds a live credential for your Substack account,
-and an open endpoint hands it to anyone who finds the port. Binding beyond
-localhost without a token logs a warning for exactly this reason.
+and an open endpoint hands it to anyone who finds the port. It will not start
+on any address but localhost without a token, for exactly this reason.
 
 ## Good-faith research
 

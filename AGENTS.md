@@ -31,23 +31,40 @@ and then renders the post with the tags visible as text. There is no error to
 catch. `src/content/` exists entirely because of this, and the round trip is
 tested in `tests/content.test.ts`. Never send a raw string as a body.
 
-**Writes are on by default.** Only the irreversible actions require
-`confirm: true`. A server that gates every write teaches the caller to pass the
-flag reflexively, which is worse than no gate. See `src/safety.ts`.
+**Writes are on by default.** Only the public or irreversible actions need
+approval: over MCP a person approves each where the client can ask, and
+`confirm: true` counts only where it cannot. A server that gates every write
+teaches the caller to approve reflexively, which is worse than no gate. Slipway
+runs the guard; `src/tools/kit.ts` decides which tools need it.
 
-**Annotations are set on every tool**, because MCP defaults `destructiveHint`
+**Annotations are set on every tool**, by Slipway from each tool's risk, because MCP defaults `destructiveHint`
 and `openWorldHint` to true when omitted, so an unannotated read shows up in a
 client as dangerous.
 
 **Note scheduling is local.** Substack schedules posts but not Notes, so the
-queue lives in `src/scheduler.ts` and only fires while the server runs. That
-limit is documented rather than hidden.
+queue lives in `src/scheduler.ts` and only fires while the server runs:
+`onServe` in `src/app.ts` starts it, over stdio or HTTP, and never for a CLI
+command. That limit is documented rather than hidden.
+
+## Where things are
+
+| Path | What it holds |
+|---|---|
+| `src/app.ts` | The Slipway app: tools, settings, login, doctor, the Note queue. Slipway serves MCP, the CLI and `--http`, and owns the write guard and the audit log |
+| `src/guide.ts` | Server instructions, resources and prompts |
+| `src/doctor.ts` | Session age, publications and a live sign-in per publication |
+| `src/config.ts` | Credentials and the multi-publication model |
+| `src/api/` | The one HTTP client and its typed errors |
+| `src/auth/` | `login` and the encrypted session file |
+| `src/content/` | Markdown and HTML to Substack's ProseMirror body, and back |
+| `src/tools/` | One module per group; `kit.ts` adapts them to Slipway |
 
 ## Adding a tool
 
 One `defineTool` call in the right module under `src/tools/`. Guarding,
-annotations, error handling and publication selection are applied centrally by
-`src/tools/kit.ts`, so a tool describes only what it does.
+annotations and error handling come from Slipway, and `src/tools/kit.ts` adds
+publication selection and turns Substack's errors into exit codes, so a tool
+describes only what it does.
 
 Group by what the tool reaches, not by endpoint. Put platform constraints in the
 tool description, where they stay in context, not only in the README.

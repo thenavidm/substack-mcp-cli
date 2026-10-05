@@ -146,6 +146,7 @@ export const draftTools = [
     name: "update_draft",
     title: "Update a draft",
     risk: "write",
+    idempotent: true,
     description:
       "Change any part of an existing draft. Only the fields you pass are touched, so you can update just the title without resending the body. Works on unpublished drafts.",
     schema: {
@@ -349,6 +350,7 @@ export const draftTools = [
     name: "schedule_draft",
     title: "Schedule a draft",
     risk: "write",
+    idempotent: true,
     public: true,
     description:
       "Schedule a draft to publish at a future time. Substack handles the actual publishing, so this survives your machine being off. Call unschedule_draft to cancel.",
@@ -401,6 +403,7 @@ export const draftTools = [
     name: "unschedule_draft",
     title: "Unschedule a draft",
     risk: "write",
+    idempotent: true,
     description: "Cancel a scheduled publication and return the post to being a plain draft.",
     schema: {
       id: z.number().describe("Draft id to unschedule."),
@@ -463,6 +466,7 @@ export const draftTools = [
     name: "set_draft_body",
     title: "Replace a draft body with a structured document",
     risk: "write",
+    idempotent: true,
     description: `Replace a draft's body with a Substack document you build node by node. Use this when you need exact control that markdown cannot express, such as a specific image caption or a button.
 
 The document is {"type":"doc","content":[ ... ]}.

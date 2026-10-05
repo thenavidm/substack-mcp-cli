@@ -1,4 +1,4 @@
-<img src="https://cdn.navid.media/connectors/substack-icon.png" alt="Substack" width="88">
+<img src="https://cdn.navid.me/connectors/substack-icon.png" alt="Substack" width="88">
 
 # Substack MCP Server & CLI
 
@@ -17,9 +17,9 @@ Substack has no public API, which is why your assistant cannot see any of it, an
 
 This one speaks Substack's own document format. Ask for a draft and you get a draft, with the YouTube link as a player and the paywall where you put it.
 
-Built and maintained by [Navid Moazzez](https://navid.me?utm_source=github&utm_medium=referral&utm_campaign=substack-mcp&utm_content=readme).
+Built and maintained by [Navid Moazzez](https://navid.me?utm_source=github&utm_medium=referral&utm_campaign=substack-mcp-cli&utm_content=readme). Built on [Slipway](https://github.com/thenavidm/slipway), which turns one definition of each tool into the MCP server and the CLI.
 
-<img src="https://cdn.navid.media/repos/substack-mcp.gif?v=7" alt="Claude Code using the Substack MCP server" width="520">
+<img src="https://cdn.navid.me/articles/vibe-creator/substack-mcp.gif?v=7" alt="Claude Code using the Substack MCP server" width="520">
 
 ## Two ways to use it
 
@@ -46,7 +46,7 @@ and errors are JSON on stderr whichever you pick.
 receives for that tool, which is how you can check the two surfaces really are
 one thing.
 
-### MCP server, for AI agents
+### MCP server, for your AI app
 
 `substack-mcp` is what Claude Code, Claude Desktop, Cursor and the rest launch.
 You never run it by hand:
@@ -60,6 +60,9 @@ claude mcp add substack \
 
 Then just ask: _"which post drove the most paid conversions last month?"_
 
+Each publish, delete, Note and comment waits for your approval in the client, as
+[section 8](#8-writing-safely-) explains.
+
 ### Which one
 
 | Where you are | What you can reach |
@@ -71,7 +74,32 @@ Then just ask: _"which post drove the most paid conversions last month?"_
 They are the same program reading the same tool definitions, so anything one
 can do, the other can.
 
-## Contents 📑
+## Features
+
+Every tool is both a command and an MCP tool, with the same name. The command
+is the tool name with dashes.
+
+| Capability | CLI command | MCP tool |
+|---|---|---|
+| Drafts | `substack-cli list-drafts` / `get-draft` / `create-draft` / `update-draft` / `delete-draft` | `list_drafts` / `get_draft` / `create_draft` / `update_draft` / `delete_draft` |
+| Publish or schedule a draft | `substack-cli publish-draft` / `schedule-draft` / `unschedule-draft` / `list-scheduled-posts` | `publish_draft` / `schedule_draft` / `unschedule_draft` / `list_scheduled_posts` |
+| Bodies in Substack's own format | `substack-cli set-draft-body` / `preview-draft-body` | `set_draft_body` / `preview_draft_body` |
+| Published posts and their numbers | `substack-cli list-posts` / `get-post` / `get-post-by-id` / `search-posts` / `get-post-stats` / `rank-posts` | `list_posts` / `get_post` / `get_post_by_id` / `search_posts` / `get_post_stats` / `rank_posts` |
+| Notes, now or later | `substack-cli publish-note` / `publish-note-with-link` / `schedule-note` / `list-scheduled-notes` / `cancel-scheduled-note` / `list-notes` / `delete-note` | `publish_note` / `publish_note_with_link` / `schedule_note` / `list_scheduled_notes` / `cancel_scheduled_note` / `list_notes` / `delete_note` |
+| Subscribers | `substack-cli list-subscribers` / `export-subscribers` / `get-subscriber-count` / `add-subscriber` | `list_subscribers` / `export_subscribers` / `get_subscriber_count` / `add_subscriber` |
+| Analytics | `substack-cli get-analytics` / `get-dashboard-summary` / `get-email-stats` / `get-growth-sources` / `get-revenue-summary` | `get_analytics` / `get_dashboard_summary` / `get_email_stats` / `get_growth_sources` / `get_revenue_summary` |
+| Tags | `substack-cli list-publication-tags` / `create-tag` / `get-post-tags` / `add-tag-to-post` / `remove-tag-from-post` | `list_publication_tags` / `create_tag` / `get_post_tags` / `add_tag_to_post` / `remove_tag_from_post` |
+| Comments | `substack-cli get-post-comments` / `comment-on-post` / `delete-comment` / `get-comment-thread` | `get_post_comments` / `comment_on_post` / `delete_comment` / `get_comment_thread` |
+| Reading Substack | `substack-cli list-subscriptions` / `list-reader-posts` / `get-reader-post` / `get-reader-feed` / `get-profile-feed` / `restack-note` | `list_subscriptions` / `list_reader_posts` / `get_reader_post` / `get_reader_feed` / `get_profile_feed` / `restack_note` |
+| Your publication | `substack-cli get-publication-settings` / `update-publication-settings` / `get-sections` / `list-contributors` / `get-import-status` | `get_publication_settings` / `update_publication_settings` / `get_sections` / `list_contributors` / `get_import_status` |
+| Templates | `substack-cli list-templates` / `create-template` / `delete-template` / `create-draft-from-template` | `list_templates` / `create_template` / `delete_template` / `create_draft_from_template` |
+| Research other writers | `substack-cli research-creator-posts` / `research-creator-notes` / `compare-publications` / `scrape-post` / `search-publications` / `get-publication-info` / `get-user-profile` | `research_creator_posts` / `research_creator_notes` / `compare_publications` / `scrape_post` / `search_publications` / `get_publication_info` / `get_user_profile` |
+| Images | `substack-cli upload-image` | `upload_image` |
+| Check your setup | `substack-cli doctor` | not a tool |
+
+All 65 with their arguments are in [section 7](#7-tools-).
+
+## Contents
 
 | # | Section | What is in it |
 |---|---|---|
@@ -104,7 +132,7 @@ The last one is the point. It reads your existing posts, writes a new draft in y
 
 ## 2. Quick install ⚡
 
-Node 20 or newer. Nothing else.
+Node 22 or newer. Nothing else.
 
 ```bash
 npx -y @thenavidm/substack-mcp-cli@latest --version
@@ -118,7 +146,7 @@ Installing the package needs no account. Only connecting it does, which is the n
 
 | You need | Check with | If missing |
 |---|---|---|
-| Node 20 or newer | `node -v` | [nodejs.org](https://nodejs.org) |
+| Node 22 or newer | `node -v` | [nodejs.org](https://nodejs.org) |
 | A Substack publication you own | Open your publication's dashboard | Start one at [substack.com](https://substack.com), it is free |
 | Its canonical address | It ends `.substack.com` | Custom domains do not serve the API, see below |
 
@@ -251,11 +279,14 @@ Zed, Cline, Continue and any other MCP client over stdio all work. They each wan
 
 ### Docker
 
+No image is published, so build it from this repository:
+
 ```bash
+docker build -t substack-mcp-cli .
 docker run -i --rm \
   -e SUBSTACK_PUBLICATION_URL=example.substack.com \
   -e SUBSTACK_SESSION_TOKEN=your-connect-sid-value \
-  ghcr.io/thenavidm/substack-mcp:latest
+  substack-mcp-cli
 ```
 
 ### Self-hosted over HTTP
@@ -266,7 +297,7 @@ Only one thing needs this: `schedule_note` publishes from the machine the server
 substack-mcp --http --port=8788
 ```
 
-It binds to `127.0.0.1` and serves `/health`. To reach it from elsewhere set `SUBSTACK_MCP_HOST=0.0.0.0` and `SUBSTACK_MCP_TOKEN` to a random string, and put it behind TLS.
+It binds to `127.0.0.1`, serves `/health`, and refuses browser requests from other sites unless `SUBSTACK_HTTP_ALLOWED_ORIGINS` lists them. To reach it from elsewhere set `SUBSTACK_HTTP_HOST=0.0.0.0` and `SUBSTACK_HTTP_TOKEN` to a random string, and put it behind TLS; it will not start on another address without the token. 2.2's `SUBSTACK_MCP_*` names still work.
 
 > [!CAUTION]
 > The HTTP transport holds a live credential for your Substack account. Binding it
@@ -287,12 +318,12 @@ Two things account for almost every failure. Node is not on the PATH your client
 Both surfaces are the same program with the same 65 tools. The
 difference is when the model pays for them. Measured in Claude Code:
 
-| | MCP server | CLI |
+| Cost | MCP server | CLI |
 |---|---|---|
-| Every message, with every tool loaded | 25,200 tokens | nothing |
-| Every message, Claude Code's default | 1,200 tokens | nothing |
-| When Substack comes up | nothing more, or the tools it picks | 2,300 tokens for `SKILL.md`, once |
-| 20 messages with Substack in 1, every tool loaded | 504,000 tokens | 2,300 tokens |
+| Every message, with every tool loaded | 22,800 tokens | nothing |
+| Every message, Claude Code's default | 1,210 tokens | nothing |
+| When Substack comes up | nothing more, or the tools it picks | 2,360 tokens for `SKILL.md`, once |
+| 20 messages with Substack in 1, every tool loaded | 456,000 tokens | 2,360 tokens |
 
 Claude Code's [tool search](https://code.claude.com/docs/en/mcp#scale-with-mcp-tool-search)
 is on by default: it sends only the tool names and the server instructions,
@@ -305,19 +336,30 @@ Where the tokens go, with every tool loaded:
 
 | Part of the tool list | Share |
 |---|---|
-| JSON Schema structure: types, required lists, nesting | 47% |
-| Argument descriptions | 36% |
-| Tool descriptions | 17% |
+| Structure: names, types, required lists, nesting, annotations | 44% |
+| Argument descriptions | 37% |
+| Tool descriptions | 19% |
 
 To spend less, turn the server off when you are not using it, which in Claude
 Code is the `/mcp` panel. `SUBSTACK_READ_ONLY=1` takes the 24 write tools off the list, leaving 41.
 Or install the CLI and add the server on the days it earns its place.
 
-Measured on 2026-09-27 with Claude Code 2.1.257 on Claude Opus 5: one
+Measured on 2026-10-05 with Claude Code 2.1.286 on Claude Opus 5.5: one
 short prompt with and without the server connected, once with
 `ENABLE_TOOL_SEARCH=false` and once with the default, the difference read
 from the API's own usage figures. `SKILL.md` was measured the same way. Other
 apps and models count tokens a little differently.
+
+Against 2.2.3, measured the same day: every tool loaded costs 22,833 tokens
+instead of 25,215, tool search the same, and `SKILL.md` 102 more, because it now
+names all ten commands that need `--confirm`, says how approval works over MCP
+and lists every exit code. In Codex 0.159.3 on gpt-6.1-sol, the same
+task, "find the command that schedules a Note to publish later and the flags it
+requires", read a median of 83,422 input tokens on 3.0.0 against 105,216 on
+2.2.3 over the CLI, and 48,510 against 48,534 over MCP, five runs each. 2.2.3's
+help listed no commands, so the model matched 3.0.0 only in the two runs where
+it guessed `schedule-note` blind; in the other three it read the full list or
+ran a command that does not exist.
 
 ## 7. Tools 🛠️
 
@@ -415,6 +457,7 @@ Two things about `export_subscribers`, both verified against the live API:
 | `get_dashboard_summary` | read | The headline numbers |
 | `get_email_stats` | read | Delivery, opens, clicks |
 | `get_revenue_summary` | read | Plans, prices, what each brings in |
+| `get_growth_sources` | read | Where new subscribers came from in a window, ranked |
 
 `get_analytics` reports: `unsubscribes`, `unsubscribes_timeseries`, `retention`, `retention_summary`, `referrals_leaderboard`, `referrals_summary`, `audience_overlap`, `audience_locations`, `subscriber_notes`, `paid_subscriber_growth`, `arr_timeseries`, `followers_timeseries`, `subscribers_timeseries`, `growth_sources`, `growth_events`, `network_attribution`.
 
@@ -514,14 +557,13 @@ The actual hazard is narrow and worth naming.
 
 None of these is dangerous when a person meant it. All of them are dangerous one plausible misreading of "tidy up my drafts" away.
 
-So everything works, and the irreversible things need an explicit `confirm: true`:
+So everything works, and the irreversible things need your approval:
 
 ```
-delete_draft is irreversible: permanently delete draft 4821.
-Nothing has been changed. Re-run with confirm: true if that is what you want.
+delete_draft is public or cannot be undone, so it will not run without confirm: true. About to: delete draft 4821. Call again with confirm: true if that is what was asked for.
 ```
 
-A careless call trips over that. An intentional one clears it in a single retry.
+In a terminal that is `--confirm`, which `--agent` never adds. Over MCP a person approves each call where the client can ask: Claude Code (2.1.246 and later) shows its own prompt, and a client that can show forms asks with an approval form whose one box starts unticked. Each approval is signed, bound to that exact call and works once. Where a client can do neither, the model's `confirm: true` counts, and it should pass it only when you asked for that exact action. `SUBSTACK_CONFIRM=model` makes `confirm: true` enough everywhere, for an agent with no person to ask.
 
 ### Turning writes off entirely
 
@@ -543,7 +585,7 @@ Every tool sets `readOnlyHint`, `destructiveHint`, `idempotentHint` and `openWor
 "env": { "SUBSTACK_AUDIT_LOG": "/Users/you/.substack-mcp/audit.log" }
 ```
 
-Append-only, one JSON line per attempted write, allowed or blocked.
+Append-only, one JSON line per attempted write, allowed or blocked, with who approved it: `person`, `client` or `flag`.
 
 ### Prompt injection
 
@@ -553,7 +595,8 @@ An agent that can read that text and also publish is exposed to instructions hid
 
 Two things push back on that. Every one of those tools says so in its own response, and the server's instructions tell the model to treat that text as data rather than orders.
 
-Neither is complete. The real defence for an agent working unattended is `SUBSTACK_READ_ONLY=1`, which removes the write tools entirely.
+Neither is complete. The real defense for an agent working unattended is `SUBSTACK_READ_ONLY=1`, which removes the write tools entirely.
+
 ### Risks worth knowing
 
 **This uses an undocumented API.**
@@ -570,7 +613,7 @@ Never paste it into an issue.
 
 **An agent with publish rights can email your entire list.**
 
-The confirmation gate makes that hard to do by accident. It does not make it impossible for a determined bad instruction.
+The approval gate makes that hard to do by accident. It does not make it impossible for a determined bad instruction.
 
 If you are pointing an autonomous agent at this, run it with `SUBSTACK_READ_ONLY=1`.
 
@@ -647,6 +690,7 @@ That is the same exposure as the environment variable path, which is why environ
 **`scheduled-notes.json`**, the local queue for `schedule_note`. Plain JSON, `0600`, containing the text of Notes you have not published yet.
 
 Your posts, drafts and subscribers are never copied locally. Every read goes to Substack live.
+
 ### How it works
 
 ```
@@ -655,7 +699,7 @@ your MCP client
       v
   substack-mcp
       |
-      +-- write guard        confirm, read-only, audit log
+      +-- Slipway            both surfaces, the write guard, the audit log
       +-- content pipeline   markdown/HTML <-> ProseMirror, embeds
       +-- one HTTP client    timeout, retry, backoff, spacing
       |
@@ -703,47 +747,17 @@ Some custom domains sit behind Cloudflare, which can answer 403 with `error code
 **Tools missing from the list** `SUBSTACK_READ_ONLY` is set. The 24 write tools are hidden by design.
 
 **Nothing happens at all** Check your client's MCP logs. On a bad config the server still starts and reports the problem per tool call, rather than failing silently at boot.
-### Environment variables
 
-| Variable | Default | What it does |
-|---|---|---|
-| `SUBSTACK_PUBLICATION_URL` | | Your publication, e.g. `example.substack.com` |
-| `SUBSTACK_SESSION_TOKEN` | | The `connect.sid` cookie value |
-| `SUBSTACK_USER_ID` | resolved | Your numeric user id |
-| `SUBSTACK_PUBLICATIONS` | | JSON array, for several publications |
-| `SUBSTACK_READ_ONLY` | `0` | Disable every write |
-| `SUBSTACK_ALLOW_DESTRUCTIVE` | `1` | Allow publish and delete |
-| `SUBSTACK_AUDIT_LOG` | | Append-only log of attempted writes |
-| `SUBSTACK_REQUEST_TIMEOUT_MS` | `30000` | Per-request deadline |
-| `SUBSTACK_MIN_REQUEST_INTERVAL_MS` | `350` | Minimum spacing between requests |
-| `SUBSTACK_MAX_RETRIES` | `3` | Retries on 429 and 5xx |
-| `SUBSTACK_USER_AGENT` | Chrome | Override the browser signature |
-| `SUBSTACK_MCP_HOME` | `~/.substack-mcp` | Where session and queue live |
-| `SUBSTACK_MCP_HOST` | `127.0.0.1` | HTTP bind address |
-| `SUBSTACK_MCP_PORT` | `8788` | HTTP port |
-| `SUBSTACK_MCP_TOKEN` | | Bearer token for HTTP |
-| `SUBSTACK_MCP_ALLOWED_ORIGINS` | | Extra origins beyond localhost |
+**"will not run without --confirm"** Working as intended. See [section 8](#8-writing-safely-).
 
-### Environment variables
+**Claude Code asks before every publish** Expected: publishing, deleting, Notes and comments wait for your approval.
 
-| Variable | Default | What it does |
-|---|---|---|
-| `SUBSTACK_PUBLICATION_URL` | | Your publication, e.g. `example.substack.com` |
-| `SUBSTACK_SESSION_TOKEN` | | The `connect.sid` cookie value |
-| `SUBSTACK_USER_ID` | resolved | Your numeric user id |
-| `SUBSTACK_PUBLICATIONS` | | JSON array, for several publications |
-| `SUBSTACK_READ_ONLY` | `0` | Disable every write |
-| `SUBSTACK_ALLOW_DESTRUCTIVE` | `1` | Allow publish and delete |
-| `SUBSTACK_AUDIT_LOG` | | Append-only log of attempted writes |
-| `SUBSTACK_REQUEST_TIMEOUT_MS` | `30000` | Per-request deadline |
-| `SUBSTACK_MIN_REQUEST_INTERVAL_MS` | `350` | Minimum spacing between requests |
-| `SUBSTACK_MAX_RETRIES` | `3` | Retries on 429 and 5xx |
-| `SUBSTACK_USER_AGENT` | Chrome | Override the browser signature |
-| `SUBSTACK_MCP_HOME` | `~/.substack-mcp` | Where session and queue live |
-| `SUBSTACK_MCP_HOST` | `127.0.0.1` | HTTP bind address |
-| `SUBSTACK_MCP_PORT` | `8788` | HTTP port |
-| `SUBSTACK_MCP_TOKEN` | | Bearer token for HTTP |
-| `SUBSTACK_MCP_ALLOWED_ORIGINS` | | Extra origins beyond localhost |
+**`claude -p` will not publish** Headless Claude Code refuses tools that need a person. Give that agent `SUBSTACK_CONFIRM=model`.
+
+**No approval form appears** The client cannot show forms, so the model's `confirm: true` counts, and only for an action you asked for.
+
+**A piped request gets no answer** Stdin closed before the answer. The MCP stdio binding stops a server when its input ends; keep stdin open until you read the answer, or use the CLI.
+
 
 ## Environment variables
 
@@ -765,7 +779,8 @@ tighten or tune it.
 |---|---|---|
 | `SUBSTACK_READ_ONLY` | `0` | `1` hides every write, leaving the 41 reading tools |
 | `SUBSTACK_ALLOW_DESTRUCTIVE` | `1` | `0` keeps ordinary writes, blocks publishing and deleting |
-| `SUBSTACK_AUDIT_LOG` | none | Path to an append-only log of every attempted write |
+| `SUBSTACK_AUDIT_LOG` | none | Path to an append-only log of every attempted write, and who approved it |
+| `SUBSTACK_CONFIRM` | `human` | `model` lets `confirm: true` alone approve over MCP, for an agent with no person to ask |
 
 **Tuning**
 
@@ -776,15 +791,20 @@ tighten or tune it.
 | `SUBSTACK_MAX_RETRIES` | `3` | Retries on rate limits and 5xx |
 | `SUBSTACK_USER_AGENT` | a browser UA | Sent on every request |
 | `SUBSTACK_MCP_HOME` | `~/.substack-mcp` | Where the session and queued Notes are kept |
+| `SUBSTACK_TOOL_TIMEOUT_MS` | none | Give up on any tool after this long |
+| `SUBSTACK_SURFACE` | `full` | `search` lists three tools that find, describe and run the rest |
+| `SUBSTACK_DEBUG` | `0` | `1` prints debug lines on stderr |
 
 **Serving over HTTP** (`--http`, see [SECURITY.md](SECURITY.md) before you use it)
 
 | Variable | Default | What it does |
 |---|---|---|
-| `SUBSTACK_MCP_PORT` | `8788` | Port to bind |
-| `SUBSTACK_MCP_HOST` | `127.0.0.1` | Interface to bind |
-| `SUBSTACK_MCP_TOKEN` | none | Bearer token. Required in practice if you bind beyond localhost |
-| `SUBSTACK_MCP_ALLOWED_ORIGINS` | none | Comma-separated origins allowed to connect |
+| `SUBSTACK_HTTP_PORT` | `8788` | Port to bind |
+| `SUBSTACK_HTTP_HOST` | `127.0.0.1` | Interface to bind |
+| `SUBSTACK_HTTP_TOKEN` | none | Bearer token. Any address but localhost refuses to start without one |
+| `SUBSTACK_HTTP_ALLOWED_ORIGINS` | none | Comma-separated browser origins allowed to connect beyond localhost |
+
+2.2 named these `SUBSTACK_MCP_PORT`, `SUBSTACK_MCP_HOST`, `SUBSTACK_MCP_TOKEN` and `SUBSTACK_MCP_ALLOWED_ORIGINS`. Those names still work, and the new ones win when both are set.
 
 ## Versions
 
@@ -854,9 +874,9 @@ And it turns markdown into real Substack formatting, including embeds and paywal
 <details>
 <summary><b>Can it delete something by accident?</b></summary>
 
-Not without being told twice. `delete_draft`, `delete_note`, `delete_comment` and `delete_template` are permanent, with no trash to recover from.
+Not without your approval. `delete_draft`, `delete_note`, `delete_comment` and `delete_template` are permanent, with no trash to recover from.
 
-All four refuse to run unless the call passes `confirm: true`. The same guard covers `publish_draft`, because publishing with `send: true` emails your whole list and an email cannot be unsent.
+All four wait for your approval: Claude Code shows its own prompt for each one, and a client that can show forms asks with one. Where a client can do neither, the model must pass `confirm: true`. The same guard covers `publish_draft`, because publishing with `send: true` emails your whole list and an email cannot be unsent.
 
 Setting `SUBSTACK_READ_ONLY=1` removes all 24 write tools from the list entirely.
 
@@ -891,27 +911,39 @@ Substack sessions do expire, and when yours does every authenticated tool starts
 </details>
 
 <details>
+<summary><b>Can it publish without me asking?</b></summary>
+
+It publishes when you ask it to. Publishing, deleting, Notes and comments wait
+for your approval: Claude Code shows its own prompt for each one, and a client
+that can show forms asks with one. Where a client can do neither, the model's
+`confirm: true` counts, which is a speed bump against a careless call rather
+than a lock. Setting `SUBSTACK_READ_ONLY=1` removes every write tool from the
+list, so the model cannot see or call them.
+
+</details>
+
+<details>
 <summary><b>How do I disconnect it?</b></summary>
 
 Remove the server from your client's config, which for Claude Code is `claude mcp remove substack`. Then delete `~/.substack-mcp` to remove the stored session and any queued Notes. Nothing is left behind, and nothing was ever stored anywhere but your own machine.
 
 </details>
 
-## Questions 💬
+## Questions
 
 Run into a problem or have a question? [Open an issue](https://github.com/thenavidm/substack-mcp-cli/issues) and I will help.
 
 Found a security vulnerability? [Report it privately](https://github.com/thenavidm/substack-mcp-cli/security/advisories/new) instead, never as an issue. [SECURITY.md](SECURITY.md) covers what this holds, the write-safety model, and running it over HTTP.
 
-## About the author 👋
+## About the author
 
 Navid Moazzez is a leading AI business strategist, and the host of the AI Creator Summit, watched by 100,000+ creators. He helps creators and founders master AI and build their own AI Operating System (AI OS) to automate their business and life. He creates useful free tools, MCP servers and CLIs that creators and founders can use in their own workflows.
 
 **Links**
 
-- Personal website: [navid.me](https://navid.me?utm_source=github&utm_medium=referral&utm_campaign=substack-mcp&utm_content=readme)
-- Link in bio: [navid.bio](https://navid.bio?utm_source=github&utm_medium=referral&utm_campaign=substack-mcp&utm_content=readme)
-- Navid Media: [navid.media](https://navid.media?utm_source=github&utm_medium=referral&utm_campaign=substack-mcp&utm_content=readme)
+- Personal website: [navid.me](https://navid.me?utm_source=github&utm_medium=referral&utm_campaign=substack-mcp-cli&utm_content=readme)
+- Link in bio: [navid.bio](https://navid.bio?utm_source=github&utm_medium=referral&utm_campaign=substack-mcp-cli&utm_content=readme)
+- Navid Media: [navid.media](https://navid.media?utm_source=github&utm_medium=referral&utm_campaign=substack-mcp-cli&utm_content=readme)
 - YouTube: [@thenavidm](https://youtube.com/@thenavidm?sub_confirmation=1) and [@thenavidai](https://youtube.com/@thenavidai?sub_confirmation=1)
 - X: [@thenavidm](https://x.com/thenavidm)
 - Instagram: [@thenavidm](https://instagram.com/thenavidm)
@@ -919,16 +951,17 @@ Navid Moazzez is a leading AI business strategist, and the host of the AI Creato
 
 If this is useful, star the repo and come say hi on [X](https://x.com/thenavidm).
 
-## Dependencies 📦
+## Dependencies
 
 | Library | License | What it does |
 |---|---|---|
-| [MCP TypeScript SDK](https://github.com/modelcontextprotocol/typescript-sdk) | MIT | The MCP server and transports |
+| [Slipway](https://github.com/thenavidm/slipway) | Apache-2.0 | The MCP server and the CLI from one definition of each tool, with the write guard |
+| [MCP TypeScript SDK](https://github.com/modelcontextprotocol/typescript-sdk) | Apache-2.0 | The MCP protocol and transports, through Slipway |
 | [zod](https://github.com/colinhacks/zod) | MIT | Tool argument schemas and validation |
 
 [Playwright](https://github.com/microsoft/playwright) is an optional peer dependency, used only by `login --playwright` and never loaded by the server.
 
-## License ⚖️
+## License
 
 [MIT](./LICENSE). Free to use, modify, and share.
 

@@ -23,6 +23,7 @@ export const publicationTools = [
     name: "update_publication_settings",
     title: "Update publication settings",
     risk: "write",
+    idempotent: true,
     public: true,
     description: `Change publication settings. Only the fields you pass are touched.
 

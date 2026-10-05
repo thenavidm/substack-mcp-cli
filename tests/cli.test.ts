@@ -1,171 +1,153 @@
 /**
- * The CLI adapter.
+ * The two surfaces, now that Slipway builds both from ALL_TOOLS.
  *
- * What matters here is that the shell surface is derived from the tool specs
- * rather than described a second time, so the tests that count are the ones
- * asserting parity with ALL_TOOLS and the ones covering the argv shapes a
- * person actually types.
+ * Parsing, help and the exit-code contract are Slipway's and tested there. What
+ * matters here: every tool arrives on both surfaces intact, the guard behaves as
+ * the README promises, the Note queue drains from a running server and never
+ * from a CLI command, 2.2's HTTP setting names keep working, and the docs stay
+ * in step with the code.
  */
 
-import { readFileSync, existsSync } from "node:fs";
-import { describe, expect, it } from "vitest";
-import { z } from "zod";
-import { flagsFor, parseArgs, isCliCommand } from "../src/cli.js";
+import { existsSync, mkdtempSync, readdirSync, readFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { EXIT, toSlipwayError } from "@thenavidm/slipway";
+import { checkApp, cli, connect } from "@thenavidm/slipway/testing";
+import { AuthenticationError, NotFoundError, RateLimitError, ServerError, SubstackError, ValidationError } from "../src/api/errors.js";
+import { app } from "../src/app.js";
+import { listScheduled, schedule } from "../src/scheduler.js";
 import { ALL_TOOLS } from "../src/tools/index.js";
+import { makeContext, toSlipway } from "../src/tools/kit.js";
+import type { SubstackClient } from "../src/api/client.js";
+import { loadConfig } from "../src/config.js";
 
-describe("flagsFor", () => {
-  it("derives a flag per schema key, kebab-cased", () => {
-    const flags = flagsFor({ reply_to: z.string().optional() });
-    expect(flags[0]).toMatchObject({ key: "reply_to", flag: "--reply-to", kind: "string" });
+const env = {};
+afterEach(() => vi.unstubAllEnvs());
+// Nothing here may read or write a real session or queue.
+const emptyHome = () => vi.stubEnv("SUBSTACK_MCP_HOME", mkdtempSync(join(tmpdir(), "substack-home-")));
+
+describe("Substack on Slipway", () => {
+  it("offers every tool as a command and over MCP, under the same names", async () => {
+    const list = await cli(app, [], { env });
+    for (const tool of ALL_TOOLS) expect(list.stdout).toContain(tool.command);
+    const mcp = await connect(app, { env });
+    const names = (await mcp.listTools()).map((tool) => tool.name).sort();
+    await mcp.close();
+    expect(names).toEqual(ALL_TOOLS.map((tool) => tool.name).sort());
   });
 
-  it("reads required from the absence of .optional()", () => {
-    const flags = flagsFor({ text: z.string(), account: z.string().optional() });
-    expect(flags.find((f) => f.key === "text")?.required).toBe(true);
-    expect(flags.find((f) => f.key === "account")?.required).toBe(false);
+  it("offers its resources once a publication is connected, as 2.2 did", async () => {
+    emptyHome();
+    // With none to offer, the server does not offer resources at all, as 2.2 did not.
+    const before = await connect(app, { env });
+    await before.close();
+    vi.stubEnv("SUBSTACK_PUBLICATION_URL", "example.substack.com");
+    vi.stubEnv("SUBSTACK_SESSION_TOKEN", "s");
+    const after = await connect(app, { env });
+    const shown = (await after.request("resources/list")) as { resources: Array<{ uri: string }> };
+    await after.close();
+    expect(before.initialize.capabilities.resources).toBeUndefined();
+    expect(shown.resources.map((resource) => resource.uri).sort()).toEqual(["substack://connected", "substack://publication"]);
   });
 
-  it("carries .describe() through as help", () => {
-    const flags = flagsFor({ text: z.string().describe("The post body.") });
-    expect(flags[0]?.help).toBe("The post body.");
+  it("refuses to publish without --confirm, before anything reaches Substack", async () => {
+    const run = await cli(app, ["publish-draft", "--id", "1"], { env });
+    expect(run.code).toBe(2);
+    expect(JSON.parse(run.stderr).code).toBe("refused");
+    expect(run.stderr).toContain("--confirm");
   });
 
-  it("finds the description whichever side of .optional() it was chained", () => {
-    const outer = flagsFor({ a: z.string().optional().describe("outer") });
-    const inner = flagsFor({ b: z.string().describe("inner").optional() });
-    expect(outer[0]?.help).toBe("outer");
-    expect(inner[0]?.help).toBe("inner");
+  it("hides every write when SUBSTACK_READ_ONLY is set", async () => {
+    const mcp = await connect(app, { env: { SUBSTACK_READ_ONLY: "1" } });
+    const tools = await mcp.listTools();
+    await mcp.close();
+    expect(tools.length).toBeGreaterThan(0);
+    expect(tools.every((tool) => tool.annotations?.readOnlyHint === true)).toBe(true);
   });
 
-  it("exposes an enum's values as choices", () => {
-    const flags = flagsFor({ reply_control: z.enum(["everyone", "nobody"]).optional() });
-    expect(flags[0]).toMatchObject({ kind: "enum", choices: ["everyone", "nobody"] });
+  it("reports a missing argument by its flag and exits 2", async () => {
+    const run = await cli(app, ["get-draft"], { env });
+    expect(run.code).toBe(2);
+    expect(JSON.parse(run.stderr).error).toContain("--id");
   });
 
-  it("marks a scalar array repeatable and an object array json", () => {
-    const flags = flagsFor({
-      langs: z.array(z.string()).optional(),
-      images: z.array(z.object({ url: z.string() })).optional(),
-    });
-    expect(flags.find((f) => f.key === "langs")).toMatchObject({ kind: "string", repeatable: true });
-    expect(flags.find((f) => f.key === "images")).toMatchObject({ kind: "json", repeatable: true });
-  });
-});
-
-describe("parseArgs", () => {
-  const flags = flagsFor({
-    text: z.string(),
-    limit: z.number().optional(),
-    confirm: z.boolean().optional(),
-    langs: z.array(z.string()).optional(),
-    link: z.object({ uri: z.string() }).optional(),
-    reply_control: z.enum(["everyone", "nobody"]).optional(),
+  it("calls a run with no publication connected not configured, exit 10", async () => {
+    emptyHome();
+    expect((await cli(app, ["list-drafts"], { env: {} })).code).toBe(EXIT.notConfigured);
   });
 
-  it("accepts --flag value and --flag=value alike", () => {
-    expect(parseArgs(["--text", "hi"], flags)).toEqual({ text: "hi" });
-    expect(parseArgs(["--text=hi"], flags)).toEqual({ text: "hi" });
+  it("keeps login reachable from the CLI, with its modes", async () => {
+    expect((await cli(app, ["--help"], { env })).stdout).toContain("substack-cli login [<publication>] [--paste | --playwriter | --playwright]");
+    expect((await cli(app, ["login", "--help"], { env })).stdout).toContain("Usage: substack-cli login");
   });
 
-  it("accepts the underscore spelling of a flag", () => {
-    expect(parseArgs(["--reply_control", "nobody"], flags)).toEqual({ reply_control: "nobody" });
+  /** Substack schedules posts but not Notes, so 2.2 drained its own queue while serving; that moved to onServe. */
+  it("publishes a Note that came due from a running server, and leaves the queue alone in the CLI", async () => {
+    emptyHome();
+    vi.stubEnv("SUBSTACK_PUBLICATION_URL", "example.substack.com");
+    vi.stubEnv("SUBSTACK_SESSION_TOKEN", "s");
+    schedule("Shipped.", new Date(Date.now() - 1000), "example.substack.com");
+    expect((await cli(app, ["list-drafts", "--help"], { env: {} })).code).toBe(0);
+    expect(listScheduled("scheduled")).toHaveLength(1);
+
+    const sent: unknown[] = [];
+    const config = loadConfig();
+    const client = { request: async (_url: string, init: { body: unknown }) => (sent.push(init.body), { id: 77 }) } as unknown as SubstackClient;
+    await app.definition.onServe!(makeContext(client, config), { debug() {}, info() {}, warn() {}, error() {} });
+    await vi.waitFor(() => expect(listScheduled("published")).toHaveLength(1));
+    expect(sent).toHaveLength(1);
   });
 
-  it("treats a boolean as a bare switch", () => {
-    expect(parseArgs(["--text", "hi", "--confirm"], flags)).toEqual({ text: "hi", confirm: true });
-    expect(parseArgs(["--confirm=false"], flags)).toEqual({ confirm: false });
-  });
-
-  it("coerces numbers, and refuses ones that are not", () => {
-    expect(parseArgs(["--limit", "25"], flags)).toEqual({ limit: 25 });
-    expect(() => parseArgs(["--limit", "many"], flags)).toThrow(/expects a number/);
-  });
-
-  it("parses a json flag, and refuses malformed json", () => {
-    expect(parseArgs(['--link={"uri":"https://x.com"}'], flags)).toEqual({
-      link: { uri: "https://x.com" },
-    });
-    expect(() => parseArgs(["--link", "{oops"], flags)).toThrow(/expects JSON/);
-  });
-
-  it("collects a repeatable flag into an array", () => {
-    expect(parseArgs(["--langs", "en", "--langs", "sv"], flags)).toEqual({ langs: ["en", "sv"] });
-  });
-
-  it("checks an enum against its choices", () => {
-    expect(() => parseArgs(["--reply-control", "friends"], flags)).toThrow(/expects one of/);
-  });
-
-  it("fills the first required flag from a bare argument", () => {
-    expect(parseArgs(["hello"], flags)).toEqual({ text: "hello" });
-  });
-
-  it("wraps a bare argument when the required flag is repeatable", () => {
-    const repeatable = flagsFor({ actors: z.array(z.string()) });
-    expect(parseArgs(["bsky.app"], repeatable)).toEqual({ actors: ["bsky.app"] });
-  });
-
-  it("refuses an unknown option rather than dropping it", () => {
-    expect(() => parseArgs(["--nope", "x"], flags)).toThrow(/Unknown option/);
-  });
-
-  it("refuses a second bare argument", () => {
-    expect(() => parseArgs(["one", "two"], flags)).toThrow(/Unexpected argument/);
+  it("passes slipway check", async () => {
+    const report = await checkApp(app, { env });
+    expect(report.findings.filter((finding) => finding.level === "error")).toEqual([]);
   });
 });
 
-describe("parity with the MCP surface", () => {
-  it("routes every tool name, in both spellings", () => {
-    for (const tool of ALL_TOOLS) {
-      expect(isCliCommand([tool.name])).toBe(true);
-      expect(isCliCommand([tool.name.replace(/_/g, "-")])).toBe(true);
-    }
-  });
-
-  it("builds flags for every tool without throwing", () => {
-    for (const tool of ALL_TOOLS) {
-      expect(() => flagsFor(tool.schema)).not.toThrow();
-    }
-  });
-
-  it("gives every schema key a flag", () => {
-    for (const tool of ALL_TOOLS) {
-      expect(flagsFor(tool.schema)).toHaveLength(Object.keys(tool.schema).length);
-    }
-  });
-
-  it("leaves the server's own flags alone", () => {
-    expect(isCliCommand(["--http"])).toBe(false);
-    expect(isCliCommand(["--version"])).toBe(false);
-    expect(isCliCommand([])).toBe(false);
+describe("Substack's errors keep their exit codes and their details", () => {
+  const at = "https://example.substack.com/api/v1/drafts";
+  it.each([
+    ["an expired cookie", new AuthenticationError("Session expired.", 401, at), EXIT.auth],
+    ["bad arguments", new ValidationError("Bad body.", 400, at), EXIT.usage],
+    ["a draft that is gone", new NotFoundError("Not found.", 404, at), EXIT.notFound],
+    ["a rate limit", new RateLimitError("Slow down.", 429, at), EXIT.rateLimited],
+    ["a server failure", new ServerError("Boom.", 502, at), EXIT.api],
+    ["no answer at all", new SubstackError("Could not reach Substack: fetch failed", 0, at), EXIT.api],
+  ])("maps %s", (_label, error, code) => {
+    expect(toSlipwayError(toSlipway(error)).exitCode).toBe(code);
   });
 });
 
 describe("documentation stays in step with the code", () => {
   const read = (p: string): string => readFileSync(new URL(p, import.meta.url), "utf-8");
-  const names = (text: string): Set<string> => new Set(text.match(/SUBSTACK_[A-Z_]+/g) ?? []);
+  // A name ending in `_` is a template prefix, such as the one src/index.ts maps 2.2's HTTP names with, not a variable.
+  const names = (text: string): Set<string> => new Set((text.match(/SUBSTACK_[A-Z_]+/g) ?? []).filter((name) => !name.endsWith("_")));
+  const source = (dir: string): string =>
+    readdirSync(new URL(dir, import.meta.url), { withFileTypes: true })
+      .map((entry) => (entry.isDirectory() ? source(`${dir}${entry.name}/`) : entry.name.endsWith(".ts") ? read(`${dir}${entry.name}`) : ""))
+      .join("\n");
+
+  /** Every variable the server reads: this repo's code, and Slipway's as agent-context lists them. */
+  const used = async (): Promise<Set<string>> => {
+    const context = JSON.parse((await cli(app, ["agent-context"], { env })).stdout);
+    return new Set([...names(source("../src/")), ...context.settings.map((setting: { env: string }) => setting.env)]);
+  };
 
   /**
    * Two variables shipped undocumented and five never reached `--help`, which is
    * the kind of drift nobody notices because both sides look complete on their own.
    */
-  it("documents every environment variable the code reads", () => {
-    const used = names(["config.ts", "transport/http.ts"].map((f) => read(`../src/${f}`)).join("\n"));
+  it("documents every environment variable the server reads", async () => {
     const documented = names(read("../README.md"));
-    expect([...used].filter((v) => !documented.has(v))).toEqual([]);
+    expect([...(await used())].filter((v) => !documented.has(v))).toEqual([]);
   });
 
-  it("lists every environment variable in --help", () => {
-    const used = names(["config.ts", "transport/http.ts"].map((f) => read(`../src/${f}`)).join("\n"));
-    const helped = names(read("../src/index.ts"));
-    // The help groups the three HTTP ones as `SUBSTACK_HTTP_PORT / _HOST / _TOKEN`.
-    const shorthand = new Set([
-      "SUBSTACK_MCP_PORT",
-      "SUBSTACK_MCP_HOST",
-      "SUBSTACK_MCP_TOKEN",
-      "SUBSTACK_MCP_ALLOWED_ORIGINS",
-    ]);
-    expect([...used].filter((v) => !helped.has(v) && !shorthand.has(v))).toEqual([]);
+  it("lists every environment variable in --help", async () => {
+    const help = (await cli(app, ["--help"], { env })).stdout;
+    // The help groups the HTTP ones as `SUBSTACK_HTTP_PORT / _HOST / _TOKEN / _ALLOWED_ORIGINS`.
+    const shorthand = new Set(["SUBSTACK_HTTP_HOST", "SUBSTACK_HTTP_TOKEN", "SUBSTACK_HTTP_ALLOWED_ORIGINS"]);
+    expect([...(await used())].filter((v) => !help.includes(v) && !shorthand.has(v))).toEqual([]);
   });
 
   /**

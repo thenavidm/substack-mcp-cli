@@ -6,12 +6,12 @@ Four discovery tools work with no login at all: `search_publications`, `get_publ
 
 ## Prerequisites
 
-Node 20 or newer. Nothing else.
+Node 22 or newer. Nothing else.
 
 ## Install
 
 ```bash
-claude mcp add substack -- npx -y @thenavidm/substack-mcp
+claude mcp add substack -- npx -y @thenavidm/substack-mcp-cli
 ```
 
 Or in any client's MCP config:
@@ -21,7 +21,7 @@ Or in any client's MCP config:
   "mcpServers": {
     "substack": {
       "command": "npx",
-      "args": ["-y", "@thenavidm/substack-mcp"],
+      "args": ["-y", "@thenavidm/substack-mcp-cli"],
       "env": {
         "SUBSTACK_PUBLICATION_URL": "example.substack.com",
         "SUBSTACK_SESSION_TOKEN": "your-connect-sid-value"
@@ -38,7 +38,7 @@ Your `connect.sid` cookie is full access to your Substack account. Treat it like
 ### Fastest
 
 ```bash
-npx @thenavidm/substack-mcp login
+npx @thenavidm/substack-mcp-cli login
 ```
 
 Prompts for the publication URL and the cookie, resolves your user id, and stores it encrypted in `~/.substack-mcp/session.json`. After that you can leave the `env` block out of your client config entirely.
@@ -46,7 +46,7 @@ Prompts for the publication URL and the cookie, resolves your user id, and store
 ### From the browser you already have open
 
 ```bash
-npx @thenavidm/substack-mcp login --playwriter
+npx @thenavidm/substack-mcp-cli login --playwriter
 ```
 
 Reads the cookie out of your running Chrome. Needs [Playwriter](https://playwriter.dev) and its extension.
@@ -55,7 +55,7 @@ Reads the cookie out of your running Chrome. Needs [Playwriter](https://playwrit
 
 ```bash
 npm i -g playwright && npx playwright install chromium
-npx @thenavidm/substack-mcp login --playwright
+npx @thenavidm/substack-mcp-cli login --playwright
 ```
 
 Slowest by a distance. Use it on a machine with no Chrome, or in CI.
@@ -73,7 +73,7 @@ Disable ad blockers first. Some strip the cookie from that panel.
 ## Verify
 
 ```bash
-npx @thenavidm/substack-mcp doctor
+npx @thenavidm/substack-mcp-cli doctor
 ```
 
 Checks credentials, configuration, connectivity and byline resolution, and names whatever is wrong.
@@ -82,11 +82,12 @@ Checks credentials, configuration, connectivity and byline resolution, and names
 
 | Variable | Effect |
 |---|---|
-| `SUBSTACK_READ_ONLY=1` | Only the 38 read tools are exposed |
+| `SUBSTACK_READ_ONLY=1` | Only the 41 read tools are exposed |
 | `SUBSTACK_ALLOW_DESTRUCTIVE=0` | Drafting works, publishing and deleting do not |
-| `SUBSTACK_AUDIT_LOG=/path/to/log` | Append-only record of every attempted write |
+| `SUBSTACK_AUDIT_LOG=/path/to/log` | Append-only record of every attempted write, and who approved it |
+| `SUBSTACK_CONFIRM=model` | Lets `confirm: true` alone approve over MCP, for an agent with no person to ask |
 
-Irreversible actions require `confirm: true` regardless of these settings.
+Publishing, deleting, Notes and comments wait for your approval whatever these settings say: Claude Code shows its own prompt for each, a client that can show forms asks with one, and elsewhere the model must pass `confirm: true`.
 
 ## When it stops working
 
@@ -97,4 +98,4 @@ If you are on a custom domain and get a 403 mentioning `error code: 1010`, that 
 ## Links
 
 - [Substack](https://substack.com)
-- [Repository](https://github.com/thenavidm/substack-mcp)
+- [Repository](https://github.com/thenavidm/substack-mcp-cli)

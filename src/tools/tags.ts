@@ -101,6 +101,7 @@ export const tagTools = [
     name: "add_tag_to_post",
     title: "Tag a post",
     risk: "write",
+    idempotent: true,
     description:
       "Put an existing tag on a post. Call list_publication_tags for the tag id, or create_tag first if it does not exist yet.",
     schema: {

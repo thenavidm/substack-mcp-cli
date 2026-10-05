@@ -7,9 +7,9 @@ set -euo pipefail
 
 here="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
-command -v node >/dev/null || { echo "node 20+ is required"; exit 1; }
+command -v node >/dev/null || { echo "node 22+ is required"; exit 1; }
 major="$(node -p 'process.versions.node.split(".")[0]')"
-[ "$major" -ge 20 ] || { echo "node 20+ is required, found $(node -v)"; exit 1; }
+[ "$major" -ge 22 ] || { echo "node 22+ is required, found $(node -v)"; exit 1; }
 
 echo "==> installing dependencies"
 ( cd "$here" && npm ci --silent )
