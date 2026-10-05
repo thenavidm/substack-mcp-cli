@@ -2,7 +2,7 @@
   "manifest_version": "0.2",
   "name": "substack",
   "display_name": "Substack",
-  "version": "3.0.0",
+  "version": "3.0.1",
   "description": "Substack MCP server and CLI for Claude Code and AI agents. 65 tools for drafts, posts, Notes, subscribers, analytics, tags, comments and researching other publications.",
   "long_description": "Connects Claude to a Substack publication you own.\n\nSubstack publishes no API, so this calls the same endpoints its own web app calls, signed with your session cookie. There is no OAuth app to register: the setup is your publication URL and the connect.sid cookie from a browser you are already signed in to.\n\nPublishing emails every subscriber and cannot be unsent, so publishing, Notes, comments, restacks and every delete wait for your approval.\n\nFour tools need no login at all, so researching other publications works before any setup.",
   "author": {

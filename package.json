@@ -1,6 +1,6 @@
 {
   "name": "@thenavidm/substack-mcp-cli",
-  "version": "3.0.0",
+  "version": "3.0.1",
   "description": "Substack MCP server for Claude Code and AI agents. 65 tools for drafts, posts, Notes, subscribers, analytics, tags, comments and researching other publications.",
   "type": "module",
   "main": "./dist/index.js",
@@ -24,7 +24,7 @@
     "build:mcpb": "bash desktop-extension/build.sh"
   },
   "dependencies": {
-    "@thenavidm/slipway": "^0.1.9",
+    "@thenavidm/slipway": "^0.1.17",
     "zod": "^4.2.0"
   },
   "peerDependencies": {
