@@ -97,7 +97,7 @@ is the tool name with dashes.
 | Images | `substack-cli upload-image` | `upload_image` |
 | Check your setup | `substack-cli doctor` | not a tool |
 
-All 65 with their arguments are in [section 7](#7-tools-).
+All 65 with their arguments are in [section 7](#7-tools-%EF%B8%8F).
 
 ## Contents
 
@@ -109,9 +109,9 @@ All 65 with their arguments are in [section 7](#7-tools-).
 | 4 | [Connect your client](#4-connect-your-client-) | Claude, Cursor, Windsurf, the rest |
 | 5 | [Check it worked](#5-check-it-worked-) | And the two things that fail |
 | 6 | [Which surface, and what each costs](#6-which-surface-and-what-each-costs) | Measured in Claude Code, and how to spend less |
-| 7 | [Tools](#7-tools-) | All 65, grouped by what they reach |
+| 7 | [Tools](#7-tools-%EF%B8%8F) | All 65, grouped by what they reach |
 | 8 | [Writing safely](#8-writing-safely-) | What is guarded and what is not |
-| 9 | [Writing posts](#9-writing-posts-) | Markdown, embeds, paywalls |
+| 9 | [Writing posts](#9-writing-posts-%EF%B8%8F) | Markdown, embeds, paywalls |
 | 10 | [Your data](#10-your-data-) | What is stored, and where |
 | 11 | [Troubleshooting](#11-troubleshooting-) | When something breaks |
 | 12 | [FAQ](#12-faq-) | The questions people actually ask |
