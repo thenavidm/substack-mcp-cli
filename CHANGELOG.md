@@ -2,9 +2,26 @@
 
 | Component | Version | Last Updated |
 |-----------|---------|--------------|
-| substack-mcp-cli | 3.0.1 | 2026-10-05 |
+| substack-mcp-cli | 3.1.0 | 2026-10-14 |
 
 ---
+
+## 3.1.0, 2026-10-14
+
+Scheduled Notes go out once, and none is lost. Measured on the same scenarios against 3.0.1:
+
+| Scenario | 3.0.1 | 3.1.0 |
+|---|---|---|
+| 3 servers sharing one queue, 10 due Notes | 30 sends: each Note posted 3 times | 10 sends, none twice |
+| A send slower than the one-minute timer | Posted twice | Posted once |
+| A damaged queue file, then a new Note | All 3 scheduled Notes lost | Refused, a copy kept, none lost |
+
+- **Each Note is claimed before it is sent.** Every AI tool runs its own server and they share one queue, so 3.0.1 could post the same Note once per open tool, and again whenever a send outlasted the timer. The queue now changes only under a lock file, and a Note is marked `publishing` before it goes out.
+- **The queue file cannot be wiped.** Writes go to a temporary file and swap in whole. A file that cannot be read is kept, with a copy, and reported; 3.0.1 read it as empty and overwrote it.
+- **Retries that never double-post.** A send that cannot reach Substack, is rate limited or meets a server error is tried again after 1, 5 and 15 minutes. One that gets no answer, or whose server stopped mid-send, is marked `check`, because Substack may have published it: look before scheduling it again.
+- **`list_scheduled_notes`** shows the new `publishing` and `check` states, the attempts and the next try.
+- **Corrected:** Substack's composer can schedule Notes, since April 2026. The docs said it could not.
+- 12 new tests in `tests/scheduler.test.ts`.
 
 ## 3.0.1, 2026-10-05
 

@@ -89,7 +89,7 @@ export const app = slipway<ToolContext>({
       return 0;
     },
   },
-  // Substack schedules posts but not Notes, so the queue lives here and drains while the server runs, on either transport.
+  // The Notes queue drains while the server runs, on either transport. Several servers can share it safely: see scheduler.ts.
   onServe: (ctx) => {
     const scheduler = new NoteScheduler(async (note) => {
       const creds = ctx.publication(note.publication_url);

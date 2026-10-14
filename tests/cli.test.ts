@@ -82,7 +82,7 @@ describe("Substack on Slipway", () => {
     expect((await cli(app, ["login", "--help"], { env })).stdout).toContain("Usage: substack-cli login");
   });
 
-  /** Substack schedules posts but not Notes, so 2.2 drained its own queue while serving; that moved to onServe. */
+  /** 2.2 drained its own Notes queue while serving; that moved to onServe. */
   it("publishes a Note that came due from a running server, and leaves the queue alone in the CLI", async () => {
     emptyHome();
     vi.stubEnv("SUBSTACK_PUBLICATION_URL", "example.substack.com");

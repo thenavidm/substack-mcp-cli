@@ -408,16 +408,16 @@ Notes have no draft state on Substack. Writing one publishes it, immediately and
 | `publish_note` | **destructive** | Live and public at once. Needs `confirm` |
 | `publish_note_with_link` | **destructive** | With a link preview card. Needs `confirm` |
 | `schedule_note` | write | Queue one for later. See the caveat below |
-| `list_scheduled_notes` | read | What is queued, published, failed or cancelled |
+| `list_scheduled_notes` | read | What is queued, published, failed, cancelled, or to check |
 | `cancel_scheduled_note` | write | Cancel before it fires |
 | `list_notes` | read | Notes you have published |
 | `delete_note` | **destructive** | Permanent. Needs `confirm` |
 
-Substack does not schedule Notes, so the queue is kept locally and this server publishes each one when it comes due.
+Substack's own composer can schedule a Note. This queue adds scheduling from your AI tool or the command line, in batches, with a list you can check and cancel. The server publishes each Note when it comes due.
 
-**That only happens while the server is running.** A Note set for 9am fires at 9am if your machine is awake with your client open. Otherwise it goes out on the next start after that time, flagged as published late.
+**That only happens while a server is running.** A Note set for 9am fires at 9am if your machine is awake with your client open. Otherwise it goes out on the next start after that time, flagged as published late. For scheduling that does not depend on your laptop, see [self-hosted over HTTP](#self-hosted-over-http), or schedule the Note in Substack's composer.
 
-Nothing is ever dropped. For scheduling that does not depend on your laptop, see [self-hosted over HTTP](#self-hosted-over-http).
+**Each Note goes out once.** Every AI tool you open runs its own copy of this server, and they share one queue, so a Note is claimed before it is sent and no other copy sends it again. If Substack cannot be reached, it tries again after 1, 5 and 15 minutes. If a send gets no answer, Substack may have published it anyway, so it is marked `check` for you to look at, never sent a second time. A queue file that cannot be read is kept, with a copy, and reported; nothing in it is overwritten.
 
 ### Subscribers
 

@@ -95,9 +95,11 @@ export const noteTools = [
     title: "Schedule a Note",
     risk: "write",
     public: true,
-    description: `Queue a Note to publish later. Substack has no native Note scheduling, so the queue is kept locally and this server publishes the Note when it comes due.
+    description: `Queue a Note to publish later, from here. Substack's own composer can also schedule a Note; this queue adds scheduling from an AI tool or the command line, in batches, with a list to check and cancel.
 
-That means it only fires while this server is running. A Note scheduled for 9am publishes at 9am if your machine is awake with your MCP client open, and otherwise on the next start after that time, marked as published late. Nothing is dropped. For scheduling that does not depend on your laptop, run this server continuously over HTTP or in Docker.
+It only fires while a server is running. A Note scheduled for 9am publishes at 9am if your machine is awake with your MCP client open, and otherwise on the next start after that time, marked as published late. For scheduling that does not depend on your laptop, run this server continuously over HTTP or in Docker, or schedule the Note in Substack's composer.
+
+Every AI tool you open runs its own server, and they share one queue: each Note is claimed before it is sent, so it goes out once. A send that cannot reach Substack is tried again after 1, 5 and 15 minutes; one with no answer is marked for you to check, never sent twice.
 
 Scheduling is not publishing, so this does not require a confirmation. The Note goes out publicly when it fires.`,
     schema: {
@@ -139,10 +141,10 @@ Scheduling is not publishing, so this does not require a confirmation. The Note 
     title: "List scheduled Notes",
     risk: "read",
     description:
-      "List Notes queued by schedule_note, soonest first. Also shows which ones published, which failed and why.",
+      "List Notes queued by schedule_note, soonest first: which are waiting, which published (and whether late), which failed and why, and which to check because a send got no answer, so they may or may not have gone out.",
     schema: {
       status: z
-        .enum(["scheduled", "published", "failed", "canceled"])
+        .enum(["scheduled", "publishing", "published", "failed", "check", "canceled"])
         .optional()
         .describe("Filter by status. Omit to see all of them."),
     },
@@ -159,6 +161,8 @@ Scheduling is not publishing, so this does not require a confirmation. The Note 
           published_at: note.published_at ?? null,
           published_late: note.published_late ?? false,
           error: note.error ?? null,
+          attempts: note.attempts ?? 0,
+          next_attempt_at: note.next_attempt_at ?? null,
         })),
       };
     },

@@ -41,10 +41,14 @@ runs the guard; `src/tools/kit.ts` decides which tools need it.
 and `openWorldHint` to true when omitted, so an unannotated read shows up in a
 client as dangerous.
 
-**Note scheduling is local.** Substack schedules posts but not Notes, so the
-queue lives in `src/scheduler.ts` and only fires while the server runs:
-`onServe` in `src/app.ts` starts it, over stdio or HTTP, and never for a CLI
-command. That limit is documented rather than hidden.
+**Note scheduling from here is a local queue.** Substack's composer can
+schedule a Note too; this queue adds scheduling from an AI tool or the CLI. It
+lives in `src/scheduler.ts` and only fires while a server runs: `onServe` in
+`src/app.ts` starts it, over stdio or HTTP, and never for a CLI command. Every
+AI tool starts its own server and they share the queue, so it is changed only
+under a lock file, a Note is claimed before it is sent, writes swap in whole,
+and an unreadable queue is kept and reported, never overwritten. Never change
+that without running `tests/scheduler.test.ts`.
 
 ## Where things are
 
